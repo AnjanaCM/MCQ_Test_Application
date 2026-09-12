@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MCQ Examination</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        /* HEADER*/
+
+        .header {
+            background: #1f2937;
+            color: white;
+            padding: 18px 30px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            position: sticky;
+            top: 0;
+
+            z-index: 1000;
+        }
+
+        .header h2 {
+            margin: 0;
+        }
+
+        .timer {
+            background: #dc2626;
+            padding: 10px 18px;
+            border-radius: 8px;
+
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+
+        /* MAIN CONTAINER */
+
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+
+        /* CANDIDATE INFORMATION */
+
+        .candidate-info {
+            background: white;
+            padding: 18px 20px;
+
+            border-radius: 10px;
+            margin-bottom: 20px;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .candidate-info p {
+            margin: 6px 0;
+        }
+
+
+        /*CAMERA*/
+
+        .camera-box {
+            background: white;
+            padding: 20px;
+
+            border-radius: 10px;
+            margin-bottom: 20px;
+
+            text-align: center;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        #camera {
+            width: 280px;
+            height: 210px;
+
+            object-fit: cover;
+
+            border-radius: 8px;
+
+            background: #111;
+        }
+
+        #camera-status {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+
+        /*QUESTION CARD*/
+
+        .question-card {
+            background: white;
+
+            padding: 25px;
+            margin-bottom: 20px;
+
+            border-radius: 10px;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .question {
+            font-size: 18px;
+            font-weight: bold;
+
+            margin-bottom: 18px;
+        }
+
+
+        /*OPTIONS */
+
+        .option {
+            display: block;
+
+            padding: 12px;
+            margin: 8px 0;
+
+            border: 1px solid #ddd;
+            border-radius: 6px;
+
+            cursor: pointer;
+        }
+
+        .option:hover {
+            background: #f0f4f8;
+        }
+
+        .option input {
+            margin-right: 10px;
+        }
+
+
+        /*SUBMIT BUTTON */
+
+        .submit-container {
+            text-align: center;
+
+            margin: 30px 0 50px;
+        }
+
+        .submit-btn {
+            background: #2563eb;
+
+            color: white;
+
+            border: none;
+
+            padding: 14px 35px;
+
+            border-radius: 8px;
+
+            font-size: 17px;
+
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background: #1d4ed8;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!--HEADER -->
+
+    <div class="header">
+
+        <h2>MCQ Examination</h2>
+
+        <div class="timer">
+
+            Time Left:
+
+            <span id="timer">
+                40:00
+            </span>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="container">
+
+
+        <!-- CANDIDATE INFORMATION -->
+
+        <div class="candidate-info">
+
+            <p>
+
+                <strong>Candidate:</strong>
+
+                {{ session["candidate_name"] }}
+
+            </p>
+
+
+            <p>
+
+                <strong>Email:</strong>
+
+                {{ session["candidate_email"] }}
+
+            </p>
+
+        </div>
+
+
+
+        <!--CAMERA-->
+
+        <div class="camera-box">
+
+            <h3>Camera Monitoring</h3>
+
+
+            <video
+                id="camera"
+                autoplay
+                muted
+            ></video>
+
+
+            <div id="camera-status">
+
+                Requesting camera permission...
+
+            </div>
+
+        </div>
+
+
+
+        <!-- EXAM FORM -->
+
+        <form
+            id="exam-form"
+            method="POST"
+            action="/submit"
+            onsubmit="return validateExam()"
+        >
+
+
+            <!-- QUESTIONS-->
+
+            {% for question in questions %}
+
+                {% set question_number = loop.index0 %}
+
+
+                <div class="question-card">
+
+
+                    <div class="question">
+
+                        {{ loop.index }}.
+                        {{ question.question }}
+
+                    </div>
+
+
+
+                    <!--OPTIONS-->
+
+                    {% for option in question.options %}
+
+
+                        <label class="option">
+
+
+                            <input
+                                type="radio"
+                                name="q{{ question_number }}"
+                                value="{{ loop.index0 }}"
+                            >
+
+
+                            {{ option }}
+
+
+                        </label>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            {% endfor %}
+
+
+
+            <!--SUBMIT-->
+
+            <div class="submit-container">
+
+
+                <button
+                    type="submit"
+                    class="submit-btn"
+                >
+
+                    Submit Examination
+
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+    </div>
+
+
+
+    <script>
+
+        // CHECK ALL 40 QUESTIONS
+        function validateExam() {
+
+
+            const totalQuestions = 40;
+
+
+            for (let i = 0; i < totalQuestions; i++) {
+
+
+                const selectedOption =
+                    document.querySelector(
+                        `input[name="q${i}"]:checked`
+                    );
+
+
+                // If question is not answered
+                if (!selectedOption) {
+
+
+                    alert(
+                        "Please attend all questions before submitting the examination."
+                    );
+
+
+                    // Find unanswered question
+                    const questionCard =
+                        document.querySelectorAll(
+                            ".question-card"
+                        )[i];
+
+
+                    // Scroll to unanswered question
+                    questionCard.scrollIntoView({
+
+                        behavior: "smooth",
+
+                        block: "center"
+
+                    });
+
+
+                    return false;
+
+                }
+
+            }
+
+
+            // All questions answered
+            return true;
+
+        }
+
+
+        // 40 MINUTE TIMER
+
+        const remainingSeconds = {{ remaining_seconds | tojson }};
+        let totalSeconds = remainingSeconds;
+
+
+        const timerElement =
+            document.getElementById("timer");
+
+
+        const examForm =
+            document.getElementById("exam-form");
+
+
+
+        function updateTimer() {
+
+
+            let minutes =
+                Math.floor(totalSeconds / 60);
+
+
+            let seconds =
+                totalSeconds % 60;
+
+
+            minutes =
+                String(minutes).padStart(2, "0");
+
+
+            seconds =
+                String(seconds).padStart(2, "0");
+
+
+            timerElement.textContent =
+                minutes + ":" + seconds;
+
+
+
+            // TIME OVER
+
+            if (totalSeconds <= 0) {
+
+
+                clearInterval(timerInterval);
+
+
+                alert(
+                    "Time is over. Your examination will be submitted automatically."
+                );
+
+
+                /*
+                   We intentionally use submit()
+                   here because the examination
+                   must automatically submit when
+                   the 40 minutes are over.
+                */
+
+                examForm.submit();
+
+
+                return;
+
+            }
+
+
+            totalSeconds--;
+
+        }
+
+
+
+        // Start timer immediately
+
+        updateTimer();
+
+
+        const timerInterval =
+            setInterval(
+                updateTimer,
+                1000
+            );
+
+
+
+        // CAMERA ACCESS
+
+        const video =
+            document.getElementById("camera");
+
+
+        const cameraStatus =
+            document.getElementById(
+                "camera-status"
+            );
+
+
+
+        navigator.mediaDevices.getUserMedia({
+
+            video: true,
+
+            audio: false
+
+        })
+
+
+        .then(function(stream) {
+
+
+            video.srcObject = stream;
+
+
+            cameraStatus.textContent =
+                "Camera is active";
+
+
+        })
+
+
+        .catch(function(error) {
+
+
+            cameraStatus.textContent =
+                "Camera access is required for the examination.";
+
+
+            alert(
+                "Please allow camera access to continue the examination."
+            );
+
+
+        });
+
+
+    </script>
+
+
+</body>
+
+</html>

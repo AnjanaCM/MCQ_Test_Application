@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MCQ Examination - Instructions</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 700px;
+            max-width: 90%;
+            margin: 60px auto;
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Company Logo */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .company-logo {
+            width: 180px;
+            height: auto;
+        }
+
+        /* Company Name */
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo h1 {
+            margin: 0;
+            color: #1f3c88;
+        }
+
+        .logo p {
+            margin-top: 5px;
+            color: #666;
+        }
+
+        h2 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 25px;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions li {
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .start-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .start-btn {
+            background: #1f3c88;
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .start-btn:hover {
+            background: #162d66;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Company Logo -->
+        <div class="logo-container">
+            <img
+                src="{{ url_for('static', filename='images/tts_logo.png') }}"
+                alt="TTS Company Logo"
+                class="company-logo"
+            >
+        </div>
+
+        <!-- Company Name -->
+        <div class="logo">
+            <h1>TECH TANTRA SOLUTION</h1>
+            <p>MCQ Examination</p>
+        </div>
+
+        <h2>Examination Instructions</h2>
+
+        <div class="instructions">
+            <ul>
+
+                <li>
+                    You must answer <strong>40 questions</strong>.
+                </li>
+
+                <li>
+                    The total examination duration is
+                    <strong>40 minutes</strong>.
+                </li>
+
+                <li>
+                    There is <strong>no negative marking</strong>.
+                </li>
+
+                <li>
+                    Your laptop camera must remain
+                    <strong>active throughout the examination</strong>.
+                </li>
+
+                <li>
+                    Please ensure that your camera permission is
+                    enabled before starting the examination.
+                </li>
+
+                <li>
+                    Do not refresh or close the examination window
+                    while the test is in progress.
+                </li>
+
+                <li>
+                    The examination will be
+                    <strong>automatically submitted</strong>
+                    when the 40-minute timer reaches zero.
+                </li>
+
+                <li>
+                    Please answer all questions independently
+                    and carefully.
+                </li>
+
+            </ul>
+        </div>
+
+        <div class="start-section">
+            <form action="/candidate" method="GET">
+
+                <button type="submit" class="start-btn">
+                    OK & Start Examination
+                </button>
+
+            </form>
+        </div>
+
+    </div>
+
+</body>
+</html>
