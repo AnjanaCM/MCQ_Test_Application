@@ -1,219 +1,398 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Details</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f2f4f7;
-            margin: 0;
-            padding: 0;
-        }
+```
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f2f4f7;
+        margin: 0;
+        padding: 0;
+    }
 
-        .container {
-            width: 500px;
-            max-width: 90%;
-            margin: 100px auto;
-            background: white;
-            padding: 35px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        }
+    .container {
+        width: 500px;
+        max-width: 90%;
+        margin: 100px auto;
+        background: white;
+        padding: 35px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
 
-        h1 {
-            text-align: center;
-            color: #1f3c88;
-            margin-bottom: 10px;
-        }
+    h1 {
+        text-align: center;
+        color: #1f3c88;
+        margin-bottom: 10px;
+    }
 
-        h2 {
-            text-align: center;
-            color: #333;
-            font-size: 20px;
-            margin-bottom: 30px;
-        }
+    h2 {
+        text-align: center;
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 30px;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
-        }
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+    }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 15px;
-        }
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 15px;
+    }
 
-        input:focus {
-            border-color: #1f3c88;
-            outline: none;
-        }
+    input:focus {
+        border-color: #1f3c88;
+        outline: none;
+    }
 
-        .submit-btn {
-            width: 100%;
-            padding: 12px;
-            background: #1f3c88;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-        }
+    .submit-btn {
+        width: 100%;
+        padding: 12px;
+        background: #1f3c88;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+    }
 
-        .submit-btn:hover {
-            background: #162d66;
-        }
+    .submit-btn:hover {
+        background: #162d66;
+    }
 
-        .submit-btn:disabled {
-            background: #888;
-            cursor: not-allowed;
-        }
+    .submit-btn:disabled {
+        background: #888;
+        cursor: not-allowed;
+    }
 
-        .error {
-            background: #ffe6e6;
-            color: #c00;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+    .error {
+        background: #ffe6e6;
+        color: #c00;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
 
-        .camera-message {
-            display: none;
-            background: #fff3cd;
-            color: #856404;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 14px;
-        }
-    </style>
+    .camera-message {
+        display: none;
+        background: #fff3cd;
+        color: #856404;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .camera-success {
+        display: none;
+        background: #d4edda;
+        color: #155724;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 14px;
+    }
+</style>
+```
+
 </head>
 
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <h1>TECH TANTRA SOLUTION</h1>
+```
+<h1>TECH TANTRA SOLUTION</h1>
 
-        <h2>Candidate Details</h2>
+<h2>Candidate Details</h2>
 
-        {% if error %}
-            <div class="error">
-                {{ error }}
-            </div>
-        {% endif %}
-
-        <div id="camera-message" class="camera-message"></div>
-
-        <form id="candidate-form" action="/candidate" method="POST">
-
-            <label for="name">Full Name</label>
-
-            <input
-                type="text"
-                id="name"
-                name="name"
-                placeholder="Enter your full name"
-                pattern="[A-Za-z ]+"
-                title="Name should contain letters and spaces only"
-                required
-            >
-
-            <label for="email">Email Address</label>
-
-            <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="Enter your email address"
-                required
-            >
-
-            <button
-                type="submit"
-                class="submit-btn"
-                id="start-button"
-            >
-                Submit & Continue
-            </button>
-
-        </form>
-
+{% if error %}
+    <div class="error">
+        {{ error }}
     </div>
+{% endif %}
 
-    <script>
+<div id="camera-message" class="camera-message"></div>
 
-        const form = document.getElementById("candidate-form");
-        const startButton = document.getElementById("start-button");
-        const cameraMessage = document.getElementById("camera-message");
+<div id="camera-success" class="camera-success">
+    Camera access granted. Starting examination...
+</div>
 
-        form.addEventListener("submit", async function(event) {
+<form id="candidate-form" action="/candidate" method="POST">
 
-            // Stop the form from submitting immediately
-            event.preventDefault();
+    <label for="name">Full Name</label>
 
-            // Check HTML validation first
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
+    <input
+        type="text"
+        id="name"
+        name="name"
+        placeholder="Enter your full name"
+        pattern="[A-Za-z ]+"
+        title="Name should contain letters and spaces only"
+        required
+    >
 
-            // Disable button while checking camera
-            startButton.disabled = true;
-            startButton.textContent = "Checking Camera...";
+    <label for="email">Email Address</label>
 
-            cameraMessage.style.display = "block";
-            cameraMessage.textContent =
-                "Please allow camera access to attend the examination.";
+    <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="Enter your email address"
+        required
+    >
 
-            try {
+    <button
+        type="submit"
+        class="submit-btn"
+        id="start-button"
+    >
+        Submit & Continue
+    </button>
 
-                // Request camera permission
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: false
-                });
+</form>
+```
 
-                // Camera permission was granted
-                console.log("Camera access granted.");
+</div>
 
-                // Stop this temporary camera stream.
-                // The exam page will request the camera again for monitoring.
-                stream.getTracks().forEach(track => track.stop());
+<script>
 
-                cameraMessage.style.display = "none";
+const form = document.getElementById("candidate-form");
+const startButton = document.getElementById("start-button");
+const cameraMessage = document.getElementById("camera-message");
+const cameraSuccess = document.getElementById("camera-success");
 
-                // Now allow the form to submit
-                form.submit();
 
-            } catch (error) {
+function showCameraMessage(message) {
+    cameraMessage.style.display = "block";
+    cameraMessage.textContent = message;
+}
 
-                console.error("Camera access denied:", error);
 
-                // Camera permission was denied or camera unavailable
-                cameraMessage.style.display = "block";
+function hideCameraMessage() {
+    cameraMessage.style.display = "none";
+}
 
-                cameraMessage.textContent =
-                    "Camera access is required to attend the examination. Please allow camera access and try again.";
 
-                startButton.disabled = false;
-                startButton.textContent = "Submit & Continue";
-            }
+function resetButton() {
+    startButton.disabled = false;
+    startButton.textContent = "Submit & Continue";
+}
 
+
+form.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    // ---------------------------------------------
+    // STEP 1: CHECK FORM VALIDATION
+    // ---------------------------------------------
+
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+
+    startButton.disabled = true;
+    startButton.textContent = "Checking Email...";
+
+    hideCameraMessage();
+    cameraSuccess.style.display = "none";
+
+
+    // ---------------------------------------------
+    // STEP 2: CHECK EMAIL FIRST
+    // ---------------------------------------------
+
+    try {
+
+        const response = await fetch("/check_email", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email
+            })
         });
 
-    </script>
+        if (!response.ok) {
+            throw new Error("Email verification failed.");
+        }
+
+        const result = await response.json();
+
+        // Email already used
+        if (!result.allowed) {
+
+            showCameraMessage(result.message);
+
+            resetButton();
+
+            return;
+        }
+
+    } catch (error) {
+
+        console.error("Email check error:", error);
+
+        showCameraMessage(
+            "Unable to verify the email. Please try again."
+        );
+
+        resetButton();
+
+        return;
+    }
+
+
+    // ---------------------------------------------
+    // STEP 3: NEW EMAIL → CAMERA CHECK
+    // ---------------------------------------------
+
+    startButton.textContent = "Checking Camera...";
+
+    showCameraMessage(
+        "Please allow camera access when your browser asks."
+    );
+
+
+    // ---------------------------------------------
+    // STEP 4: CHECK CAMERA API
+    // ---------------------------------------------
+
+    if (
+        !navigator.mediaDevices ||
+        typeof navigator.mediaDevices.getUserMedia !== "function"
+    ) {
+
+        showCameraMessage(
+            "Camera access is unavailable in this browser session. Please open this application in the latest Microsoft Edge or Google Chrome and make sure camera permission is enabled."
+        );
+
+        resetButton();
+
+        return;
+    }
+
+
+    // ---------------------------------------------
+    // STEP 5: REQUEST CAMERA
+    // ---------------------------------------------
+
+    try {
+
+        console.log("Requesting camera permission...");
+
+        const stream =
+            await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false
+            });
+
+        console.log("Camera permission granted.");
+
+        // Show success
+        hideCameraMessage();
+
+        cameraSuccess.style.display = "block";
+
+        startButton.textContent = "Camera Verified";
+
+
+        // Stop temporary camera stream
+        stream.getTracks().forEach(function(track) {
+            track.stop();
+        });
+
+
+        // -----------------------------------------
+        // STEP 6: SEND CANDIDATE DETAILS TO FLASK
+        // -----------------------------------------
+
+        setTimeout(function() {
+            form.submit();
+        }, 700);
+
+
+    } catch (error) {
+
+        console.error("Camera error:", error);
+        console.error("Error name:", error.name);
+        console.error("Error message:", error.message);
+
+
+        let message =
+            "Unable to access the camera.";
+
+
+        if (error.name === "NotAllowedError") {
+
+            message =
+                "Camera permission was denied. Please allow camera access to attend the examination.";
+
+        }
+        else if (error.name === "NotFoundError") {
+
+            message =
+                "No camera was found on this device. Please connect a camera and try again.";
+
+        }
+        else if (error.name === "NotReadableError") {
+
+            message =
+                "The camera is already being used by another application. Please close other applications using the camera and try again.";
+
+        }
+        else if (error.name === "SecurityError") {
+
+            message =
+                "Camera access was blocked by the browser security settings.";
+
+        }
+        else if (error.name === "AbortError") {
+
+            message =
+                "Camera access was interrupted. Please try again.";
+
+        }
+        else {
+
+            message =
+                "Camera could not be accessed. Error: " +
+                error.name;
+        }
+
+
+        showCameraMessage(message);
+
+        resetButton();
+    }
+
+});
+
+</script>
 
 </body>
 </html>
