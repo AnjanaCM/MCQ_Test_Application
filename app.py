@@ -1,79 +1,274 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from questions import QUESTIONS
-import time
 import json
 import os
-from datetime import datetime
+import time
 
 app = Flask(__name__)
 
-# Secret key for session
 app.secret_key = "mcq-test-secret-key"
 
-# Exam duration = 40 minutes
 EXAM_DURATION = 40 * 60
 
-# File where candidate answers will be stored
-DATA_FILE = os.path.join("data", "responses.json")
+RESPONSES_FILE = os.path.join("data", "responses.json")
 
 
-# First page - Instructions
+# ---------------------------------------------------------
+# LOAD SAVED RESPONSES
+# ---------------------------------------------------------
+
+def load_responses():
+    if not os.path.exists(RESPONSES_FILE):
+        return []
+
+    try:
+        with open(RESPONSES_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return []
+
+
+# ---------------------------------------------------------
+# CHECK WHETHER EMAIL HAS ALREADY ATTENDED
+# ---------------------------------------------------------
+
+def email_already_used(email):
+    email = email.strip().lower()
+
+    responses = load_responses()
+
+    for response in responses:
+
+        saved_email = str(
+            response.get("email", "")
+        ).strip().lower()
+
+        if saved_email == email:
+            return True
+
+    return False
+
+
+# ---------------------------------------------------------
+# SAVE RESPONSE
+# ---------------------------------------------------------
+
+def save_response(response_data):
+
+    os.makedirs("data", exist_ok=True)
+
+    responses = load_responses()
+
+    responses.append(response_data)
+
+    with open(RESPONSES_FILE, "w", encoding="utf-8") as file:
+        json.dump(
+            responses,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
+
+
+# ---------------------------------------------------------
+# HOME / INSTRUCTIONS PAGE
+# ---------------------------------------------------------
+
 @app.route("/")
 def home():
-    return render_template("instructions.html")
+
+    return render_template(
+        "instructions.html"
+    )
 
 
-# Candidate Details page
+# ---------------------------------------------------------
+# EMAIL CHECK ROUTE
+# ---------------------------------------------------------
+
+@app.route("/check_email", methods=["POST"])
+def check_email():
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "allowed": False,
+            "message": "Invalid request."
+        })
+
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+
+        return jsonify({
+            "allowed": False,
+            "message": "Please enter your email address."
+        })
+
+    # Check whether this email already completed the exam
+    if email_already_used(email):
+
+        return jsonify({
+            "allowed": False,
+            "message": "This email ID has already attended the examination."
+        })
+
+    return jsonify({
+        "allowed": True
+    })
+
+
+# ---------------------------------------------------------
+# CANDIDATE PAGE
+# ---------------------------------------------------------
+
 @app.route("/candidate", methods=["GET", "POST"])
 def candidate():
 
     if request.method == "POST":
 
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip()
+        name = request.form.get(
+            "name", ""
+        ).strip()
 
-        # Check whether both fields are entered
-        if not name or not email:
+        email = request.form.get(
+            "email", ""
+        ).strip().lower()
+
+        # -----------------------------
+        # VALIDATE NAME
+        # -----------------------------
+
+        if not name:
+
             return render_template(
                 "candidate.html",
-                error="Please enter both name and email."
+                error="Please enter your full name."
             )
 
-        # Store candidate information
+        if not all(
+            character.isalpha() or character.isspace()
+            for character in name
+        ):
+
+            return render_template(
+                "candidate.html",
+                error="Name should contain letters and spaces only."
+            )
+
+        # -----------------------------
+        # VALIDATE EMAIL
+        # -----------------------------
+
+        if not email:
+
+            return render_template(
+                "candidate.html",
+                error="Please enter your email address."
+            )
+
+        # -----------------------------
+        # CHECK DUPLICATE EMAIL
+        # -----------------------------
+
+        if email_already_used(email):
+
+            return render_template(
+                "candidate.html",
+                error="This email ID has already attended the examination."
+            )
+
+        # -----------------------------
+        # STORE CANDIDATE DETAILS
+        # -----------------------------
+
         session["candidate_name"] = name
         session["candidate_email"] = email
 
-        # Start a fresh exam timer
+        # Start a completely new exam
         session.pop("exam_start_time", None)
+        session.pop("exam_submitted", None)
+        session.pop("score", None)
+        session.pop("percentage", None)
 
-        # Go to examination page
-        return redirect(url_for("exam"))
+        return redirect(
+            url_for("exam")
+        )
 
-    return render_template("candidate.html")
-
-
-# Examination page
-@app.route("/exam")
-def exam():
-
-    # Candidate must enter details before starting exam
-    if "candidate_name" not in session:
-        return redirect(url_for("candidate"))
-
-    # Start timer only the first time exam page is opened
-    if "exam_start_time" not in session:
-        session["exam_start_time"] = time.time()
-
-    # Calculate elapsed time
-    elapsed_time = int(
-        time.time() - session["exam_start_time"]
+    return render_template(
+        "candidate.html"
     )
 
-    # Calculate remaining time
+
+# ---------------------------------------------------------
+# EXAM PAGE
+# ---------------------------------------------------------
+
+@app.route("/exam", methods=["GET"])
+def exam():
+
+    # Candidate must have entered details
+    if "candidate_email" not in session:
+
+        return redirect(
+            url_for("candidate")
+        )
+
+    # Prevent opening exam again after submission
+    if session.get("exam_submitted"):
+
+        return render_template(
+            "submitted.html",
+            score=session.get("score", 0),
+            percentage=session.get("percentage", 0)
+        )
+
+    email = session.get(
+        "candidate_email",
+        ""
+    ).strip().lower()
+
+    # Extra protection against duplicate attempts
+    if email_already_used(email):
+
+        session.clear()
+
+        return render_template(
+            "candidate.html",
+            error="This email ID has already attended the examination."
+        )
+
+    # -----------------------------------------
+    # START TIMER ONLY ON FIRST EXAM LOAD
+    # -----------------------------------------
+
+    if "exam_start_time" not in session:
+
+        session["exam_start_time"] = time.time()
+
+    start_time = session["exam_start_time"]
+
+    elapsed_time = int(
+        time.time() - start_time
+    )
+
     remaining_seconds = max(
         0,
         EXAM_DURATION - elapsed_time
     )
+
+    # -----------------------------------------
+    # TIME ALREADY EXPIRED
+    # -----------------------------------------
+
+    if remaining_seconds <= 0:
+
+        return render_template(
+            "submitted.html",
+            score=0,
+            percentage=0
+        )
 
     return render_template(
         "exam.html",
@@ -82,188 +277,217 @@ def exam():
     )
 
 
-# Submit Examination
+# ---------------------------------------------------------
+# SUBMIT EXAM
+# ---------------------------------------------------------
+
 @app.route("/submit", methods=["POST"])
 def submit():
 
-    # Make sure candidate has started the exam
-    if "candidate_name" not in session:
-        return redirect(url_for("candidate"))
+    # Candidate must have started exam
+    if "candidate_email" not in session:
 
-    # Receive submitted answers
-    answers = request.form
+        return redirect(
+            url_for("candidate")
+        )
 
-    # Calculate how much time has passed
-    if "exam_start_time" in session:
-        elapsed_time = time.time() - session["exam_start_time"]
-    else:
-        elapsed_time = 0
+    # Prevent duplicate submission
+    if session.get("exam_submitted"):
 
-    # Check whether the exam time is over
+        return render_template(
+            "submitted.html",
+            score=session.get("score", 0),
+            percentage=session.get("percentage", 0)
+        )
+
+    name = session.get(
+        "candidate_name",
+        ""
+    )
+
+    email = session.get(
+        "candidate_email",
+        ""
+    ).strip().lower()
+
+    # -----------------------------------------
+    # CHECK EMAIL AGAIN
+    # -----------------------------------------
+
+    if email_already_used(email):
+
+        session.clear()
+
+        return render_template(
+            "candidate.html",
+            error="This email ID has already attended the examination."
+        )
+
+    # -----------------------------------------
+    # CHECK TIME
+    # -----------------------------------------
+
+    start_time = session.get(
+        "exam_start_time"
+    )
+
+    if start_time is None:
+
+        return redirect(
+            url_for("candidate")
+        )
+
+    elapsed_time = int(
+        time.time() - start_time
+    )
+
     time_expired = elapsed_time >= EXAM_DURATION
 
-    # Manual submission requires all questions
+    # -----------------------------------------
+    # GET ANSWERS
+    # -----------------------------------------
+
+    submitted_answers = {}
+
+    for index in range(len(QUESTIONS)):
+
+        answer = request.form.get(
+            f"question_{index}"
+        )
+
+        submitted_answers[str(index)] = answer
+
+    # -----------------------------------------
+    # MANUAL SUBMISSION
+    # -----------------------------------------
+
     if not time_expired:
 
-        for i in range(len(QUESTIONS)):
+        unanswered_questions = []
 
-            if f"q{i}" not in answers:
-                return redirect(url_for("exam"))
+        for index in range(len(QUESTIONS)):
 
-    # Calculate score
+            answer = submitted_answers.get(
+                str(index)
+            )
+
+            if not answer:
+
+                unanswered_questions.append(
+                    index + 1
+                )
+
+        if unanswered_questions:
+
+            remaining_seconds = max(
+                0,
+                EXAM_DURATION - elapsed_time
+            )
+
+            return render_template(
+                "exam.html",
+                questions=QUESTIONS,
+                remaining_seconds=remaining_seconds,
+                error="Please attend all questions before submitting the examination."
+            )
+
+    # -----------------------------------------
+    # CALCULATE SCORE
+    # -----------------------------------------
+
     score = 0
 
-    for i, question in enumerate(QUESTIONS):
+    detailed_answers = []
 
-        selected_answer = answers.get(f"q{i}")
+    for index, question in enumerate(QUESTIONS):
 
-        if selected_answer is not None:
+        selected_answer = submitted_answers.get(
+            str(index)
+        )
 
-            try:
+        correct_answer = question.get(
+            "answer"
+        )
 
-                selected_answer = int(selected_answer)
+        is_correct = (
+            selected_answer == correct_answer
+        )
 
-                if selected_answer == question["answer"]:
-                    score += 1
+        if is_correct:
+            score += 1
 
-            except ValueError:
-                pass
+        if selected_answer:
+            status = "Answered"
+        else:
+            status = "Not Answered"
 
-    # Total questions
+        detailed_answers.append({
+            "question": question.get("question"),
+            "selected_answer": selected_answer,
+            "correct_answer": correct_answer,
+            "is_correct": is_correct,
+            "status": status
+        })
+
     total_questions = len(QUESTIONS)
 
-    # Calculate percentage
     percentage = round(
         (score / total_questions) * 100,
         2
     )
 
-    # Create response data
+    # -----------------------------------------
+    # SAVE RESULT
+    # -----------------------------------------
+
     response_data = {
-        "name": session["candidate_name"],
-        "email": session["candidate_email"],
-        "answers": {},
+        "name": name,
+        "email": email,
         "score": score,
         "total_questions": total_questions,
         "percentage": percentage,
-        "submitted_at": datetime.now().strftime(
+        "submitted_at": time.strftime(
             "%Y-%m-%d %H:%M:%S"
-        )
+        ),
+        "answers": detailed_answers
     }
 
-    # --------------------------------------------------
-    # Store detailed answer information
-    # --------------------------------------------------
+    save_response(
+        response_data
+    )
 
-    for i, question in enumerate(QUESTIONS):
+    # -----------------------------------------
+    # MARK EXAM AS SUBMITTED
+    # -----------------------------------------
 
-        selected_answer = answers.get(f"q{i}")
-        correct_answer = question["answer"]
+    session["exam_submitted"] = True
+    session["score"] = score
+    session["percentage"] = percentage
 
-        # Default values
-        is_correct = False
-        answer_status = "unanswered"
+    session.pop(
+        "exam_start_time",
+        None
+    )
 
-        # Check selected answer
-        if selected_answer is not None:
-
-            try:
-
-                selected_answer_number = int(selected_answer)
-
-                if selected_answer_number == correct_answer:
-                    is_correct = True
-                    answer_status = "correct"
-                else:
-                    answer_status = "incorrect"
-
-            except ValueError:
-
-                answer_status = "invalid"
-
-        # Store detailed information
-        response_data["answers"][f"q{i + 1}"] = {
-            "selected_answer": selected_answer,
-            "correct_answer": correct_answer,
-            "is_correct": is_correct,
-            "status": answer_status
-        }
-
-    # --------------------------------------------------
-    # Create data folder if it does not exist
-    # --------------------------------------------------
-
-    os.makedirs("data", exist_ok=True)
-
-    # --------------------------------------------------
-    # Read existing responses
-    # --------------------------------------------------
-
-    if os.path.exists(DATA_FILE):
-
-        try:
-
-            with open(
-                DATA_FILE,
-                "r",
-                encoding="utf-8"
-            ) as file:
-
-                all_responses = json.load(file)
-
-        except (json.JSONDecodeError, FileNotFoundError):
-
-            all_responses = []
-
-    else:
-
-        all_responses = []
-
-    # Make sure the loaded data is a list
-    if not isinstance(all_responses, list):
-        all_responses = []
-
-    # --------------------------------------------------
-    # Add new candidate response
-    # --------------------------------------------------
-
-    all_responses.append(response_data)
-
-    # --------------------------------------------------
-    # Save responses
-    # --------------------------------------------------
-
-    with open(
-        DATA_FILE,
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            all_responses,
-            file,
-            indent=4,
-            ensure_ascii=False
-        )
-
-    # --------------------------------------------------
-    # Show result
-    # --------------------------------------------------
+    # -----------------------------------------
+    # SHOW SUBMITTED PAGE
+    # -----------------------------------------
 
     return render_template(
         "submitted.html",
-        candidate_name=session["candidate_name"],
         score=score,
-        total_questions=total_questions,
         percentage=percentage
     )
 
 
-# Run Flask application
+# ---------------------------------------------------------
+# RUN APPLICATION
+# ---------------------------------------------------------
+
 if __name__ == "__main__":
 
     app.run(
-        debug=False,
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000))
+        port=5000,
+        debug=False
     )
